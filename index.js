@@ -1,4 +1,5 @@
 const userRoute = require("./routes/user.routes");
+const convoRoute = require("./routes/conversation.routes");
 const express = require("express");
 
 const app = express();
@@ -15,6 +16,7 @@ const io = new Server(server, {
 
 app.use(express.json());
 app.use("/users", userRoute);
+app.use("/convo", convoRoute);
 app.get("/", (req, res) => {
   res.json({ message: "main page" });
 });
