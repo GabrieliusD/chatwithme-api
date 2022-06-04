@@ -31,4 +31,31 @@ router.get("/:userId", async (req, res) => {
 
   res.status(200).json(convos);
 });
+
+router.post("/:convoId", async (req, res) => {
+  const { convoId } = req.params;
+  const { text, senderId } = req.body;
+
+  const message = await prisma.message.create({
+    data: {
+      senderId,
+      text,
+      conversationId: parseInt(convoId),
+    },
+  });
+
+  res.status(200).json(message);
+});
+
+router.get("/c/:convoId", async (req, res) => {
+  const { convoId } = req.params;
+
+  const messages = await prisma.message.findMany({
+    where: {
+      conversationId: parseInt(convoId),
+    },
+  });
+
+  res.status(200).json(messages);
+});
 module.exports = router;
