@@ -14,16 +14,24 @@ passport.use(
   new LocalStrategy(async function verify(username, password, cb) {
     const user = await prisma.user.findFirst({ where: { username } });
     if (!user) return cb(null, false, { message: "no user" });
-
+    const buffsalt = Buffer.from(user.salt, "hex");
     crypto.pbkdf2(
       password,
-      "test",
+      buffsalt,
       310000,
       32,
       "sha256",
       function (err, hashedPassword) {
         if (err) {
           return cb(err);
+        }
+        let buffpass = Buffer.from(user.password, "hex");
+        console.log(user.password);
+        console.log(hashedPassword.toString("hex"));
+        if (!crypto.timingSafeEqual(buffpass, hashedPassword)) {
+          return cb(null, false, {
+            message: "Incorrect username or password.",
+          });
         }
 
         return cb(null, user);
@@ -46,7 +54,7 @@ passport.deserializeUser((user, cb) => {
 
 const cors = require("cors");
 const { Server } = require("socket.io");
-const { nextTick } = require("process");
+const { nextTick, emitWarning } = require("process");
 app.use(cors());
 const server = require("http").createServer(app);
 const io = new Server(server, {
@@ -64,8 +72,8 @@ app.use(
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
     secret: "test",
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     store: new PrismaSessionStore(prisma, {
       checkPeriod: 2 * 60 * 1000,
       dbRecordIdFunction: undefined,
@@ -87,6 +95,41 @@ app.post(
   })
 );
 
+app.post("/signup", async (req, res, next) => {
+  const salt = crypto.randomBytes(16);
+  const { username, password } = req.body;
+
+  crypto.pbkdf2(
+    password,
+    salt,
+    310000,
+    32,
+    "sha256",
+    async (err, hashedPassword) => {
+      if (err) {
+        return next(err);
+      }
+
+      const user = await prisma.user.create({
+        data: {
+          username,
+          password: hashedPassword.toString("hex"),
+          salt: salt.toString("hex"),
+          email: "test123",
+        },
+      });
+
+      if (!user) return res.send("no user");
+      req.login(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        res.redirect("/");
+      });
+    }
+  );
+});
+
 app.get("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
@@ -95,7 +138,7 @@ app.get("/logout", (req, res, next) => {
 });
 
 app.get("/test", (req, res) => {
-  if (req.isAuthenticated) {
+  if (req.isAuthenticated()) {
     res.status(200).send("authenticated");
   } else {
     res.send("unauthenticated");
