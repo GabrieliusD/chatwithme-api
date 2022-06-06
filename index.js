@@ -56,17 +56,16 @@ passport.deserializeUser((user, cb) => {
 const cors = require("cors");
 const { Server } = require("socket.io");
 const { nextTick, emitWarning } = require("process");
-app.use(cors());
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 const server = require("http").createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: { credentials: true, origin: "http://localhost:3000" },
   },
 });
 
 app.use(express.json());
-app.use("/users", userRoute);
-app.use("/convo", convoRoute);
+
 //app.use("/users", usersRoute);
 app.use(
   session({
@@ -84,6 +83,8 @@ app.use(
   })
 );
 app.use(passport.authenticate("session"));
+app.use("/users", userRoute);
+app.use("/convo", convoRoute);
 
 app.get("/", (req, res) => {
   res.json({ message: "main page" });

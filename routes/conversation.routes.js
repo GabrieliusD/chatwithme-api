@@ -1,10 +1,13 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const router = require("express").Router();
+const { ensureAuth } = require("../middleware/auth.js");
 
-router.post("/create", async (req, res) => {
-  const { user1, user2 } = req.body;
-
+router.post("/create", ensureAuth, async (req, res) => {
+  const { user2 } = req.body;
+  const user1 = req.user.id;
+  console.log(req.user);
+  console.log(req.body);
   if ((!user1, !user2)) return res.status(400).send("user missing");
 
   const userprofile1 = await prisma.user.findUnique({ where: { id: user1 } });

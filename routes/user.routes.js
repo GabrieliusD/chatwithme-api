@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const router = require("express").Router();
+const { ensureAuth } = require("../middleware/auth.js");
 
 router.post("/register", async (req, res) => {
   try {
@@ -52,7 +53,6 @@ router.get("/:username", async (req, res) => {
       },
     },
   });
-  console.log(users);
   res.status(200).json(users);
 });
 
