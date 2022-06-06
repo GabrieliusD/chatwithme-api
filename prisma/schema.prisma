@@ -18,7 +18,6 @@ model User {
   salt          String?
   conversations Conversation[]
   messages      Message[]
-  friends       Friend[]
 }
 
 model Conversation {
@@ -34,12 +33,6 @@ model Message {
   text           String
   Conversation   Conversation? @relation(fields: [conversationId], references: [id])
   conversationId Int?
-}
-
-model Friend {
-  id       Int    @id @default(autoincrement())
-  friend   User   @relation(fields: [friendId], references: [id])
-  friendId String
 }
 
 model Session {

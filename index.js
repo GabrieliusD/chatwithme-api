@@ -1,5 +1,6 @@
 const userRoute = require("./routes/user.routes");
 const convoRoute = require("./routes/conversation.routes");
+const usersRoute = require("./routes/users.routes");
 const express = require("express");
 const session = require("express-session");
 const { PrismaClient } = require("@prisma/client");
@@ -66,6 +67,7 @@ const io = new Server(server, {
 app.use(express.json());
 app.use("/users", userRoute);
 app.use("/convo", convoRoute);
+//app.use("/users", usersRoute);
 app.use(
   session({
     cookie: {

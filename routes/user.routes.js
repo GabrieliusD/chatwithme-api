@@ -42,4 +42,18 @@ router.get("/", async (req, res) => {
   res.json(allUsers);
 });
 
+router.get("/:username", async (req, res) => {
+  const { username } = req.params;
+  console.log(username);
+  const users = await prisma.user.findMany({
+    where: {
+      username: {
+        contains: username,
+      },
+    },
+  });
+  console.log(users);
+  res.status(200).json(users);
+});
+
 module.exports = router;
