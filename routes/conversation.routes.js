@@ -25,14 +25,40 @@ router.post("/create", ensureAuth, async (req, res) => {
   res.status(200).json(convo);
 });
 
-router.get("/:userId", async (req, res) => {
-  const { convoId } = req.params;
+router.get("/", ensureAuth, async (req, res) => {
+  const userId = req.user.id;
   const convos = await prisma.user.findFirst({
-    where: { id: convoId },
-    include: { conversations: true },
+    where: { id: userId },
+    include: { conversations: true, user: true },
   });
 
   res.status(200).json(convos);
+});
+
+router.get("/inbox", async (req, res) => {
+  const inbox = await prisma.inbox.create({
+    data: {
+      id: 5,
+      last_sent_user_id: {
+        connect: { id: "578dc75b-c491-4b13-94ef-f25d96b48480" },
+      },
+      Inbox_Participants: {
+        create: [
+          {
+            user_id: {
+              connect: { id: "578dc75b-c491-4b13-94ef-f25d96b48480" },
+            },
+          },
+          {
+            user_id: {
+              connect: { id: "578dc75b-c491-4b13-94ef-f25d96b48480" },
+            },
+          },
+        ],
+      },
+    },
+  });
+  res.json(inbox);
 });
 
 router.post("/:convoId", async (req, res) => {

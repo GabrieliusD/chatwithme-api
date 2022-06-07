@@ -11,13 +11,35 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  username      String
-  email         String
-  password      String?
-  salt          String?
-  conversations Conversation[]
-  messages      Message[]
+  id                 String               @id @default(uuid())
+  username           String
+  email              String
+  password           String?
+  salt               String?
+  conversations      Conversation[]
+  messages           Message[]
+  Inbox              Inbox[]
+  Inbox_Participants Inbox_Participants[]
+}
+
+model Inbox {
+  id Int @id @unique
+
+  last_message      String?
+  last_sent_user_id User?   @relation(fields: [userId], references: [id])
+
+  userId             String?
+  Inbox_Participants Inbox_Participants[]
+}
+
+model Inbox_Participants {
+  id      Int   @id @unique @default(autoincrement())
+  user_id User? @relation(fields: [userId], references: [id])
+
+  userId String?
+
+  inbox_uid Inbox? @relation(fields: [inboxId], references: [id])
+  inboxId   Int?
 }
 
 model Conversation {
