@@ -23,7 +23,7 @@ model User {
 }
 
 model Inbox {
-  id Int @id @unique
+  id Int @id @unique @default(autoincrement())
 
   last_message      String?
   last_sent_user_id User?   @relation(fields: [userId], references: [id])
