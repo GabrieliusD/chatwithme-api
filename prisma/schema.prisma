@@ -16,7 +16,6 @@ model User {
   email              String
   password           String?
   salt               String?
-  conversations      Conversation[]
   messages           Message[]
   Inbox              Inbox[]
   Inbox_Participants Inbox_Participants[]
@@ -25,11 +24,12 @@ model User {
 model Inbox {
   id Int @id @unique @default(autoincrement())
 
-  last_message      String?
-  last_sent_user_id User?   @relation(fields: [userId], references: [id])
-
+  last_message       String?
+  last_sent_user_id  User?                @relation(fields: [userId], references: [id])
+  last_message_send  DateTime?
   userId             String?
   Inbox_Participants Inbox_Participants[]
+  Message            Message[]
 }
 
 model Inbox_Participants {
@@ -42,19 +42,14 @@ model Inbox_Participants {
   inboxId   Int?
 }
 
-model Conversation {
-  id       Int       @id @default(autoincrement())
-  users    User[]
-  messages Message[]
-}
-
 model Message {
-  id             Int           @id @default(autoincrement())
-  senderId       String
-  sender         User          @relation(fields: [senderId], references: [id])
-  text           String
-  Conversation   Conversation? @relation(fields: [conversationId], references: [id])
-  conversationId Int?
+  id         Int      @id @default(autoincrement())
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  text       String
+  inbox      Inbox    @relation(fields: [inboxId], references: [id])
+  inboxId    Int
+  created_at DateTime @default(now())
 }
 
 model Session {

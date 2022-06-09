@@ -1,5 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ log: ["query"] });
 const router = require("express").Router();
 const { ensureAuth } = require("../middleware/auth.js");
 
@@ -43,12 +43,12 @@ router.get("/", ensureAuth, async (req, res) => {
       },
     },
   });
-  console.log(convos, convos[3].inbox_uid.Inbox_Participants);
 
   let inboxArray = [];
 
   convos.forEach((element) => {
     let inbox = {};
+    inbox.id = element.inboxId;
     inbox.last_message = element.inbox_uid.last_message;
     inbox.last_user_id = element.inbox_uid.userId;
     inbox.participants = [];
@@ -57,7 +57,7 @@ router.get("/", ensureAuth, async (req, res) => {
     });
     inboxArray.push(inbox);
   });
-
+  console.log(inboxArray);
   res.json(inboxArray);
 });
 
@@ -94,30 +94,60 @@ router.get("/inbox", async (req, res) => {
   res.json(inbox);
 });
 
-router.post("/:convoId", async (req, res) => {
+router.get("/:convoId", ensureAuth, async (req, res) => {
   const { convoId } = req.params;
-  const { text, senderId } = req.body;
-
-  const message = await prisma.message.create({
-    data: {
-      senderId,
-      text,
-      conversationId: parseInt(convoId),
+  const userId = req.user.id;
+  console.log(userId);
+  const participants = await prisma.Inbox_Participants.findMany({
+    where: {
+      inboxId: parseInt(convoId),
     },
   });
-
-  res.status(200).json(message);
-});
-
-router.get("/c/:convoId", async (req, res) => {
-  const { convoId } = req.params;
+  let containsUser;
+  participants.forEach((value) => {
+    if (value.userId === userId) {
+      containsUser = true;
+    }
+  });
+  console.log(participants);
+  if (!containsUser) return res.status(400).json("the user is not in convo");
 
   const messages = await prisma.message.findMany({
     where: {
-      conversationId: parseInt(convoId),
+      inboxId: parseInt(convoId),
     },
   });
 
   res.status(200).json(messages);
+});
+
+router.post("/:convoId", ensureAuth, async (req, res) => {
+  console.log(req.params);
+  const convoId = parseInt(req.params.convoId);
+  const userId = req.user.id;
+  const { text } = req.body;
+
+  const participants = await prisma.Inbox_Participants.findMany({
+    where: {
+      inboxId: convoId,
+    },
+  });
+  let containsUser;
+  participants.forEach((value) => {
+    if (value.userId === userId) {
+      containsUser = true;
+    }
+  });
+  if (!containsUser) return res.status(400).json("the user is not in convo");
+
+  const message = await prisma.message.create({
+    data: {
+      senderId: userId,
+      text,
+      inboxId: parseInt(convoId),
+    },
+  });
+
+  return res.status(200).json(message);
 });
 module.exports = router;
