@@ -13,6 +13,7 @@ const crypto = require("crypto");
 
 passport.use(
   new LocalStrategy(async function verify(username, password, cb) {
+    console.log("using local strategy");
     const user = await prisma.user.findFirst({ where: { username } });
     if (!user) return cb(null, false, { message: "no user" });
     const buffsalt = Buffer.from(user.salt, "hex");
@@ -93,7 +94,7 @@ app.get("/", (req, res) => {
 app.post(
   "/login/password",
   passport.authenticate("local", {
-    successRedirect: "/",
+    successRedirect: "/users/owner/self/",
     failureRedirect: "/test",
   })
 );

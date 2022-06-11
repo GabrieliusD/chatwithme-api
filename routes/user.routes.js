@@ -56,4 +56,10 @@ router.get("/:username", async (req, res) => {
   res.status(200).json(users);
 });
 
+router.get("/owner/self", (req, res) => {
+  if (!req.user) return res.status(400).json({ error: "user not found" });
+  console.log(req.user);
+  return res.status(200).json(req.user);
+});
+
 module.exports = router;

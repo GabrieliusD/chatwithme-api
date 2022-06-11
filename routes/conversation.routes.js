@@ -16,13 +16,23 @@ router.post("/create", ensureAuth, async (req, res) => {
   if ((!userprofile1, !userprofile2))
     return res.status(400).send("user doesnt exist");
 
-  const convo = await prisma.conversation.create({
+  console.log(user1, user2);
+  const inbox = await prisma.inbox.create({
     data: {
-      users: { connect: [{ id: user1 }, { id: user2 }] },
+      Inbox_Participants: {
+        create: [
+          {
+            userId: user1,
+          },
+          {
+            userId: user2,
+          },
+        ],
+      },
     },
   });
 
-  res.status(200).json(convo);
+  res.status(200).json(inbox);
 });
 
 router.get("/", ensureAuth, async (req, res) => {
