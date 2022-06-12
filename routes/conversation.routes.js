@@ -2,10 +2,14 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient({ log: ["query"] });
 const router = require("express").Router();
 const { ensureAuth } = require("../middleware/auth.js");
-
+//create conversation
 router.post("/create", ensureAuth, async (req, res) => {
   const { user2 } = req.body;
   const user1 = req.user.id;
+  if (user1 === user2)
+    return res
+      .status(400)
+      .json({ error: "Cannot create conversation with same user" });
   console.log(req.user);
   console.log(req.body);
   if ((!user1, !user2)) return res.status(400).send("user missing");
@@ -53,9 +57,9 @@ router.get("/", ensureAuth, async (req, res) => {
       },
     },
   });
-
   let inboxArray = [];
-
+  console.log("convos" + convos);
+  if (!convos) return res.status(400).json({ error: "No Conversations" });
   convos.forEach((element) => {
     let inbox = {};
     inbox.id = element.inboxId;

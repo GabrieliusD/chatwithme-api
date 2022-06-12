@@ -151,6 +151,7 @@ app.get("/test", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("client connected");
+  socket.on("sendMessage");
 });
 
 const PORT = process.env.PORT || 8080;
