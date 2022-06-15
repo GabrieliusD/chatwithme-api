@@ -1,5 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient({ log: ["query"] });
+const prisma = new PrismaClient();
 const router = require("express").Router();
 const { ensureAuth } = require("../middleware/auth.js");
 //create conversation
@@ -10,8 +10,7 @@ router.post("/create", ensureAuth, async (req, res) => {
     return res
       .status(400)
       .json({ error: "Cannot create conversation with same user" });
-  console.log(req.user);
-  console.log(req.body);
+
   if ((!user1, !user2)) return res.status(400).send("user missing");
 
   const userprofile1 = await prisma.user.findUnique({ where: { id: user1 } });
@@ -20,7 +19,6 @@ router.post("/create", ensureAuth, async (req, res) => {
   if ((!userprofile1, !userprofile2))
     return res.status(400).send("user doesnt exist");
 
-  console.log(user1, user2);
   const inbox = await prisma.inbox.create({
     data: {
       Inbox_Participants: {
@@ -38,10 +36,9 @@ router.post("/create", ensureAuth, async (req, res) => {
 
   res.status(200).json(inbox);
 });
-
+//retrieve inboxes
 router.get("/", ensureAuth, async (req, res) => {
   const userId = req.user.id;
-  console.log(userId);
   const convos = await prisma.inbox_Participants.findMany({
     where: {
       userId,
@@ -58,28 +55,26 @@ router.get("/", ensureAuth, async (req, res) => {
     },
   });
   let inboxArray = [];
-  console.log("convos" + convos);
   if (!convos) return res.status(400).json({ error: "No Conversations" });
   convos.forEach((element) => {
     let inbox = {};
     inbox.id = element.inboxId;
     inbox.last_message = element.inbox_uid.last_message;
     inbox.last_user_id = element.inbox_uid.userId;
+    inbox.last_message_send = element.inbox_uid.last_message_send;
     inbox.participants = [];
     element.inbox_uid.Inbox_Participants.forEach((participant) => {
       inbox.participants.push(participant.user_id);
     });
     inboxArray.push(inbox);
   });
-  console.log(inboxArray);
   res.json(inboxArray);
 });
 
 router.get("/inbox", async (req, res) => {
   const { user2 } = req.body;
   const user1 = req.user.id;
-  console.log(req.user);
-  console.log(req.body);
+
   if ((!user1, !user2)) return res.status(400).send("user missing");
 
   const userprofile1 = await prisma.user.findUnique({ where: { id: user1 } });
@@ -107,11 +102,10 @@ router.get("/inbox", async (req, res) => {
   });
   res.json(inbox);
 });
-
+//get all messages
 router.get("/:convoId", ensureAuth, async (req, res) => {
   const { convoId } = req.params;
   const userId = req.user.id;
-  console.log(userId);
   const participants = await prisma.Inbox_Participants.findMany({
     where: {
       inboxId: parseInt(convoId),
@@ -123,7 +117,6 @@ router.get("/:convoId", ensureAuth, async (req, res) => {
       containsUser = true;
     }
   });
-  console.log(participants);
   if (!containsUser) return res.status(400).json("the user is not in convo");
 
   const messages = await prisma.message.findMany({
@@ -134,9 +127,8 @@ router.get("/:convoId", ensureAuth, async (req, res) => {
 
   res.status(200).json(messages);
 });
-
+//create message
 router.post("/:convoId", ensureAuth, async (req, res) => {
-  console.log(req.params);
   const convoId = parseInt(req.params.convoId);
   const userId = req.user.id;
   const { text } = req.body;
@@ -159,6 +151,17 @@ router.post("/:convoId", ensureAuth, async (req, res) => {
       senderId: userId,
       text,
       inboxId: parseInt(convoId),
+    },
+  });
+  const currentDate = new Date();
+  await prisma.inbox.update({
+    where: {
+      id: parseInt(convoId),
+    },
+    data: {
+      last_message: text,
+      userId,
+      last_message_send: currentDate.toISOString(),
     },
   });
 

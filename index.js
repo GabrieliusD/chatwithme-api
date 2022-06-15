@@ -100,6 +100,7 @@ app.post(
 );
 
 app.post("/signup", async (req, res, next) => {
+  console.log("signup");
   const salt = crypto.randomBytes(16);
   const { username, password } = req.body;
 
@@ -149,9 +150,39 @@ app.get("/test", (req, res) => {
   }
 });
 
+let users = [];
+const addUser = (userId, socketId) => {
+  !users.some((user) => user.userId === userId) &&
+    users.push({ userId, socketId });
+};
+const removeUser = (userId) => {
+  users = users.filter((user) => user.socketId !== socketId);
+};
+
+const getUser = (userId) => {
+  return users.find((user) => user.userId === userId);
+};
+
 io.on("connection", (socket) => {
   console.log("client connected");
-  socket.on("sendMessage");
+  socket.on("addUser", (userId) => {
+    addUser(userId, socket.id);
+    console.log(users);
+    io.emit("getUsers", users);
+  });
+  socket.on("sendMessage", ({ senderId, receiverId, text }) => {
+    console.log(users);
+    const user = getUser(receiverId);
+    console.log(senderId, receiverId, text, user);
+    if (!user) {
+      console.log("no user");
+      return;
+    }
+    io.to(user.socketId).emit("getMessage", {
+      senderId,
+      text,
+    });
+  });
 });
 
 const PORT = process.env.PORT || 8080;
