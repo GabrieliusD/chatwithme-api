@@ -61,28 +61,27 @@ app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 const server = require("http").createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: { credentials: true, origin: "http://localhost:3000" },
+    credentials: true,
+    origin: "http://localhost:3000",
   },
 });
 
 app.use(express.json());
-
+const sessionMiddleware = session({
+  cookie: {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
+  secret: "test",
+  resave: true,
+  saveUninitialized: true,
+  store: new PrismaSessionStore(prisma, {
+    checkPeriod: 2 * 60 * 1000,
+    dbRecordIdFunction: undefined,
+    dbRecordIdIsSessionId: true,
+  }),
+});
 //app.use("/users", usersRoute);
-app.use(
-  session({
-    cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    },
-    secret: "test",
-    resave: true,
-    saveUninitialized: true,
-    store: new PrismaSessionStore(prisma, {
-      checkPeriod: 2 * 60 * 1000,
-      dbRecordIdFunction: undefined,
-      dbRecordIdIsSessionId: true,
-    }),
-  })
-);
+app.use(sessionMiddleware);
 app.use(passport.authenticate("session"));
 app.use("/users", userRoute);
 app.use("/convo", convoRoute);
@@ -144,6 +143,7 @@ app.get("/logout", (req, res, next) => {
 
 app.get("/test", (req, res) => {
   if (req.isAuthenticated()) {
+    console.log(req.sessionID);
     res.status(200).send("authenticated");
   } else {
     res.send("unauthenticated");
@@ -162,6 +162,23 @@ const removeUser = (userId) => {
 const getUser = (userId) => {
   return users.find((user) => user.userId === userId);
 };
+const wrap = (middleware) => (socket, next) =>
+  middleware(socket.request, {}, next);
+
+io.use(wrap(sessionMiddleware));
+io.use(wrap(passport.initialize()));
+io.use(wrap(passport.session()));
+
+io.use((socket, next) => {
+  console.log("socket session id ", socket.request.sessionID);
+  if (socket.request.user) {
+    console.log("User web connection authenticated for ", socket.request.user);
+    next();
+  } else {
+    console.log("Invalid user");
+    next(new Error("unauthorized"));
+  }
+});
 
 io.on("connection", (socket) => {
   console.log("client connected");
@@ -178,6 +195,7 @@ io.on("connection", (socket) => {
       console.log("no user");
       return;
     }
+    console.log("message send: ", user.socketId, senderId, text);
     io.to(user.socketId).emit("getMessage", {
       senderId,
       text,
