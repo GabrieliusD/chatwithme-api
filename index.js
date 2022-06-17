@@ -156,7 +156,7 @@ const addUser = (userId, socketId) => {
     users.push({ userId, socketId });
 };
 const removeUser = (userId) => {
-  users = users.filter((user) => user.socketId !== socketId);
+  users = users.filter((user) => user.socketId !== userId);
 };
 
 const getUser = (userId) => {
@@ -200,6 +200,11 @@ io.on("connection", (socket) => {
       senderId,
       text,
     });
+  });
+  socket.on("disconnect", () => {
+    console.log("user left");
+    removeUser(socket.id);
+    io.emit("getUsers", users);
   });
 });
 
