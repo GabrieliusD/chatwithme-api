@@ -11,10 +11,22 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const crypto = require("crypto");
 
+const multer = require("multer");
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+var upload = multer({ storage: storage });
+
 passport.use(
   new LocalStrategy(async function verify(username, password, cb) {
     console.log("using local strategy");
     const user = await prisma.user.findFirst({ where: { username } });
+    console.log(username);
     if (!user) return cb(null, false, { message: "no user" });
     const buffsalt = Buffer.from(user.salt, "hex");
     crypto.pbkdf2(
@@ -67,6 +79,8 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+//app.use(express.static(__dirname, "public"));
 const sessionMiddleware = session({
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -85,7 +99,19 @@ app.use(sessionMiddleware);
 app.use(passport.authenticate("session"));
 app.use("/users", userRoute);
 app.use("/convo", convoRoute);
-
+app.post("/upload", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    console.log("No file received");
+    return res.send({
+      success: false,
+    });
+  } else {
+    console.log("file received");
+    return res.send({
+      success: true,
+    });
+  }
+});
 app.get("/", (req, res) => {
   res.json({ message: "main page" });
 });
@@ -101,8 +127,8 @@ app.post(
 app.post("/signup", async (req, res, next) => {
   console.log("signup");
   const salt = crypto.randomBytes(16);
-  const { username, password } = req.body;
-
+  const { username, password, email } = req.body;
+  if ((!username, !password, !email)) return next("missing field");
   crypto.pbkdf2(
     password,
     salt,
@@ -113,17 +139,21 @@ app.post("/signup", async (req, res, next) => {
       if (err) {
         return next(err);
       }
+      let user = {};
+      try {
+        user = await prisma.user.create({
+          data: {
+            username,
+            password: hashedPassword.toString("hex"),
+            salt: salt.toString("hex"),
+            email,
+          },
+        });
+      } catch (error) {
+        return next(error);
+      }
 
-      const user = await prisma.user.create({
-        data: {
-          username,
-          password: hashedPassword.toString("hex"),
-          salt: salt.toString("hex"),
-          email: "test123",
-        },
-      });
-
-      if (!user) return res.send("no user");
+      if (!user) next("no user");
       req.login(user, (err) => {
         if (err) {
           return next(err);
