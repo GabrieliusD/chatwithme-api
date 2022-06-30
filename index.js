@@ -12,12 +12,21 @@ const LocalStrategy = require("passport-local");
 const crypto = require("crypto");
 
 const multer = require("multer");
+const path = require("path");
+
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "./uploads");
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    const userId = req.user.id;
+
+    cb(
+      null,
+      `${new Date().getTime().toString()}-${userId}${path.extname(
+        file.originalname
+      )}`
+    );
   },
 });
 var upload = multer({ storage: storage });
@@ -47,7 +56,7 @@ passport.use(
             message: "Incorrect username or password.",
           });
         }
-
+        console.log(user);
         return cb(null, user);
       }
     );
@@ -56,7 +65,11 @@ passport.use(
 
 passport.serializeUser((user, cb) => {
   process.nextTick(() => {
-    cb(null, { id: user.id, username: user.username });
+    cb(null, {
+      id: user.id,
+      username: user.username,
+      profileImage: user.image,
+    });
   });
 });
 
@@ -80,6 +93,7 @@ const io = new Server(server, {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/images", express.static("uploads"));
 //app.use(express.static(__dirname, "public"));
 const sessionMiddleware = session({
   cookie: {
@@ -99,7 +113,8 @@ app.use(sessionMiddleware);
 app.use(passport.authenticate("session"));
 app.use("/users", userRoute);
 app.use("/convo", convoRoute);
-app.post("/upload", upload.single("file"), (req, res) => {
+app.post("/upload", upload.single("file"), async (req, res) => {
+  console.log(req.file);
   if (!req.file) {
     console.log("No file received");
     return res.send({
@@ -107,6 +122,22 @@ app.post("/upload", upload.single("file"), (req, res) => {
     });
   } else {
     console.log("file received");
+
+    try {
+      const updateUser = await prisma.user.update({
+        where: {
+          id: req.user.id,
+        },
+        data: {
+          image: req.file.filename,
+        },
+      });
+    } catch (error) {
+      return res.send({
+        success: false,
+      });
+    }
+
     return res.send({
       success: true,
     });
