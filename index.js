@@ -139,6 +139,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     }
 
     return res.send({
+      image: req.file.filename,
       success: true,
     });
   }
