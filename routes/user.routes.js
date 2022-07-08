@@ -62,4 +62,30 @@ router.get("/owner/self", (req, res) => {
   return res.status(200).json(req.user);
 });
 
+//user profile
+
+router.post("/profile/name", ensureAuth, async (req, res) => {
+  const { firstName, lastName } = req.body;
+  const user = req.user;
+  try {
+    const userUpdated = await prisma.user.update({
+      where: { username: user.username },
+      data: { firstName, lastName },
+    });
+    return res.status(200).json({
+      message: "updated name",
+      data: {
+        firstName: userUpdated.firstName,
+        lastName: userUpdated.lastName,
+      },
+    });
+  } catch (error) {
+    return res.status(400).json({ error: "internal server error" });
+  }
+});
+
+router.post("/profile/bio", ensureAuth, async (req, res)=>{
+  
+})
+
 module.exports = router;
