@@ -17,12 +17,23 @@ model User {
   firstName          String?
   lastName           String?
   bio                String?
+  work               UserWork?            @relation(fields: [userWorkId], references: [id])
+  hobbies            String[]
   password           String?
   salt               String?
   image              String?
   messages           Message[]
   Inbox              Inbox[]
   Inbox_Participants Inbox_Participants[]
+  userWorkId         Int?
+}
+
+model UserWork {
+  id        Int     @id @default(autoincrement())
+  jobTitle  String?
+  address   String?
+  telNumber Int?
+  User      User[]
 }
 
 model Inbox {

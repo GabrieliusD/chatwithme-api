@@ -84,8 +84,45 @@ router.post("/profile/name", ensureAuth, async (req, res) => {
   }
 });
 
-router.post("/profile/bio", ensureAuth, async (req, res)=>{
-  
-})
+router.post("/profile/bio", ensureAuth, async (req, res) => {
+  const { bio } = req.body;
+  if (!bio) return res.status(400).json({ error: "bio is empty" });
+  const user = req.user;
+  try {
+    const userUpdated = await prisma.user.update({
+      where: { id: user.id },
+      data: { bio },
+    });
+    return res.status(200).json({
+      message: "bio updated succesfully",
+      data: { bio: userUpdated.bio },
+    });
+  } catch (error) {
+    return res.status(400).json({ error: "internal server error" });
+  }
+});
+//add hobby to the database
+router.post("/profile/hobbies", ensureAuth, async (req, res) => {
+  const { hobby } = req.body;
+  const user = req.user;
+  if (!hobby) return res.status(400).json({ error: "no hobby provided" });
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      hobbies: {
+        push: hobby,
+      },
+    },
+  });
+  return res
+    .status(200)
+    .json({ message: "hobby added successfully", data: { hobby } });
+  try {
+  } catch (error) {
+    return res.status(400).json({ error: "internal server error" });
+  }
+});
+
+router.delete("/profile/hobbies", ensureAuth, async (req, res) => {});
 
 module.exports = router;
