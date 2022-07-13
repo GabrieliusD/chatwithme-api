@@ -62,6 +62,31 @@ router.get("/owner/self", (req, res) => {
   return res.status(200).json(req.user);
 });
 
+router.get("/profile/:id", ensureAuth, async (req, res) => {
+  const { id } = req.params;
+  console.log(req.params);
+  try {
+    const userProfile = await prisma.user.findFirst({
+      where: { id },
+      select: {
+        username: true,
+        firstName: true,
+        lastName: true,
+        bio: true,
+        hobbies: true,
+        image: true,
+        work: true,
+      },
+    });
+    return res
+      .status(200)
+      .json({ message: "user profile retrieved", data: { userProfile } });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "database error" });
+  }
+});
+
 //user profile
 
 router.post("/profile/name", ensureAuth, async (req, res) => {
