@@ -69,6 +69,7 @@ router.get("/profile/:id", ensureAuth, async (req, res) => {
     const userProfile = await prisma.user.findFirst({
       where: { id },
       select: {
+        id: true,
         username: true,
         firstName: true,
         lastName: true,

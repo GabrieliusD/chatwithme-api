@@ -16,6 +16,24 @@ router.post("/create", ensureAuth, async (req, res) => {
   const userprofile1 = await prisma.user.findUnique({ where: { id: user1 } });
   const userprofile2 = await prisma.user.findUnique({ where: { id: user2 } });
 
+  const convoExist = await prisma.inbox.findMany({
+    where: {
+      AND: [
+        { Inbox_Participants: { some: { userId: user1 } } },
+        { Inbox_Participants: { some: { userId: user2 } } },
+      ],
+    },
+
+    include: {
+      Inbox_Participants: true,
+    },
+  });
+  //await prisma.inbox_Participants.findMany({where:{}})
+
+  console.log(convoExist);
+
+  if (convoExist.length > 0)
+    return res.status(400).json({ error: "convo already exists" });
   if ((!userprofile1, !userprofile2))
     return res.status(400).send("user doesnt exist");
 
