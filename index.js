@@ -10,6 +10,7 @@ const app = express();
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const crypto = require("crypto");
+const dotenv = require("dotenv");
 
 const multer = require("multer");
 const path = require("path");
@@ -30,6 +31,8 @@ var storage = multer.diskStorage({
   },
 });
 var upload = multer({ storage: storage });
+
+dotenv.config();
 
 passport.use(
   new LocalStrategy(async function verify(username, password, cb) {
@@ -144,9 +147,9 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     });
   }
 });
-app.get("/", (req, res) => {
-  res.json({ message: "main page" });
-});
+// app.get("/", (req, res) => {
+//   res.json({ message: "main page" });
+// });
 
 app.post(
   "/login/password",
@@ -231,6 +234,8 @@ io.use(wrap(sessionMiddleware));
 io.use(wrap(passport.initialize()));
 io.use(wrap(passport.session()));
 
+app.use(express.static("public"));
+
 io.use((socket, next) => {
   console.log("socket session id ", socket.request.sessionID);
   if (socket.request.user) {
@@ -271,6 +276,10 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname + "/public/index.html"));
+});
 
 server.listen(PORT, () => {
   console.log("Server running, port: " + PORT);
