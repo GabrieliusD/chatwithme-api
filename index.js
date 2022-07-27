@@ -154,8 +154,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 app.post(
   "/login/password",
   passport.authenticate("local", {
-    successRedirect: "/users/owner/self/",
-    failureRedirect: "/test",
+    successRedirect: "api/users/owner/self/",
+    failureRedirect: "api/test",
   })
 );
 
@@ -277,9 +277,9 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname + "/public/index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname + "/public/index.html"));
+// });
 
 server.listen(PORT, () => {
   console.log("Server running, port: " + PORT);

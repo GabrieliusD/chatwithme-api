@@ -11,3 +11,6 @@ hooks:
   AfterInstall:
     - location: scripts/AfterInstallHook.sh
       timeout: 300
+  ApplicationStop:
+    - location: scripts/StopApplicationHook.sh
+      timeout: 300
