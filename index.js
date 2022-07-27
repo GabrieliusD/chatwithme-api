@@ -85,12 +85,12 @@ passport.deserializeUser((user, cb) => {
 const cors = require("cors");
 const { Server } = require("socket.io");
 const { nextTick, emitWarning } = require("process");
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(cors({ credentials: true, origin: "https://gabkis.com" }));
 const server = require("http").createServer(app);
 const io = new Server(server, {
   cors: {
     credentials: true,
-    origin: "http://localhost:3000",
+    origin: "https://gabkis.com",
   },
 });
 
