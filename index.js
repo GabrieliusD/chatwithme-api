@@ -88,6 +88,7 @@ const { nextTick, emitWarning } = require("process");
 app.use(cors({ credentials: true, origin: "https://gabkis.com" }));
 const server = require("http").createServer(app);
 const io = new Server(server, {
+  path: "/api/socket.io/",
   cors: {
     credentials: true,
     origin: "https://gabkis.com",
