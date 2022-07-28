@@ -158,7 +158,7 @@ app.post(
     failureRedirect: "/api/test",
   })
 );
-router.get("/login/password", (req, res) => {
+app.get("/login/password", (req, res) => {
   if (!req.user) return res.status(400).json({ error: "user not found" });
   console.log(req.user);
   return res.status(200).json(req.user);
