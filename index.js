@@ -154,10 +154,15 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 app.post(
   "/login/password",
   passport.authenticate("local", {
-    successRedirect: "api/users/owner/self/",
-    failureRedirect: "api/test",
+    successRedirect: "/api/users/owner/self/",
+    failureRedirect: "/api/test",
   })
 );
+router.get("/login/password", (req, res) => {
+  if (!req.user) return res.status(400).json({ error: "user not found" });
+  console.log(req.user);
+  return res.status(200).json(req.user);
+});
 
 app.post("/signup", async (req, res, next) => {
   console.log("signup");

@@ -9,4 +9,9 @@ export NVM_DIR="$HOME/.nvm"
 npm install
 npm i -g pm2
 node retrieveSecret.js
+
+npx prisma generate
+npx prisma migrate dev
+
 pm2 start index.js --name "ChatApi"
+pm2 save
