@@ -255,7 +255,7 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   console.log("client connected");
-  addUser(userId, socket.request.user.id);
+  addUser(socket.request.user.id, socket.id);
 
   io.emit("getUsers", users);
   socket.on("addUser", (userId) => {
