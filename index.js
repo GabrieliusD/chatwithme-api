@@ -10,6 +10,7 @@ const app = express();
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const crypto = require("crypto");
+const dotenv = require("dotenv");
 
 const multer = require("multer");
 const path = require("path");
@@ -30,6 +31,8 @@ var storage = multer.diskStorage({
   },
 });
 var upload = multer({ storage: storage });
+
+dotenv.config();
 
 passport.use(
   new LocalStrategy(async function verify(username, password, cb) {
@@ -82,12 +85,13 @@ passport.deserializeUser((user, cb) => {
 const cors = require("cors");
 const { Server } = require("socket.io");
 const { nextTick, emitWarning } = require("process");
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(cors({ credentials: true, origin: "https://gabkis.com" }));
 const server = require("http").createServer(app);
 const io = new Server(server, {
+  path: "/api/socket.io/",
   cors: {
     credentials: true,
-    origin: "http://localhost:3000",
+    origin: "https://gabkis.com",
   },
 });
 
@@ -144,17 +148,22 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     });
   }
 });
-app.get("/", (req, res) => {
-  res.json({ message: "main page" });
-});
+// app.get("/", (req, res) => {
+//   res.json({ message: "main page" });
+// });
 
 app.post(
   "/login/password",
   passport.authenticate("local", {
-    successRedirect: "/users/owner/self/",
-    failureRedirect: "/test",
+    successRedirect: "/api/users/owner/self/",
+    failureRedirect: "/api/test",
   })
 );
+app.get("/login/password", (req, res) => {
+  if (!req.user) return res.status(400).json({ error: "user not found" });
+  console.log(req.user);
+  return res.status(200).json(req.user);
+});
 
 app.post("/signup", async (req, res, next) => {
   console.log("signup");
@@ -231,6 +240,8 @@ io.use(wrap(sessionMiddleware));
 io.use(wrap(passport.initialize()));
 io.use(wrap(passport.session()));
 
+app.use(express.static("public"));
+
 io.use((socket, next) => {
   console.log("socket session id ", socket.request.sessionID);
   if (socket.request.user) {
@@ -272,6 +283,10 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname + "/public/index.html"));
+// });
 
 server.listen(PORT, () => {
   console.log("Server running, port: " + PORT);
