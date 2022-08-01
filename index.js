@@ -84,15 +84,16 @@ passport.deserializeUser((user, cb) => {
 
 const cors = require("cors");
 const { Server } = require("socket.io");
-const { nextTick, emitWarning } = require("process");
-app.use(cors({ credentials: true, origin: "https://gabkis.com" }));
+const { nextTick, emitWarning, env } = require("process");
+const origin = process.env.ORIGIN || "https://gabkis.com";
+app.use(cors({ credentials: true, origin }));
 const server = require("http").createServer(app);
 const io = new Server(server, {
-  path: "/api/socket.io/",
   cors: {
     credentials: true,
-    origin: "https://gabkis.com",
+    origin,
   },
+  path: "/api/socket.io",
 });
 
 app.use(express.json());
@@ -155,8 +156,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 app.post(
   "/login/password",
   passport.authenticate("local", {
-    successRedirect: "/api/users/owner/self/",
-    failureRedirect: "/api/test",
+    successRedirect: "/users/owner/self/",
+    failureRedirect: "/test",
   })
 );
 app.get("/login/password", (req, res) => {
@@ -255,6 +256,7 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   console.log("client connected");
+  console.log(io.of("/").sockets);
   socket.on("addUser", (userId) => {
     addUser(userId, socket.id);
     console.log(users);
