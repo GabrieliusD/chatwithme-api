@@ -256,11 +256,11 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   console.log("client connected");
-  console.log(io.of("/").sockets);
+  addUser(socket.request.user.id, socket.id);
+
+  io.emit("getUsers", users);
   socket.on("addUser", (userId) => {
-    addUser(userId, socket.id);
     console.log(users);
-    io.emit("getUsers", users);
   });
   socket.on("sendMessage", ({ senderId, receiverId, text }) => {
     console.log(users);
