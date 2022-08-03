@@ -85,6 +85,7 @@ passport.deserializeUser((user, cb) => {
 const cors = require("cors");
 const { Server } = require("socket.io");
 const { nextTick, emitWarning, env } = require("process");
+const { ensureAuth } = require("./middleware/auth");
 const origin = process.env.ORIGIN || "https://gabkis.com";
 app.use(cors({ credentials: true, origin }));
 const server = require("http").createServer(app);
@@ -152,14 +153,19 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 // app.get("/", (req, res) => {
 //   res.json({ message: "main page" });
 // });
-
+let extraPath = "/api";
+if (process.env.ENV === "local") extraPath = "";
 app.post(
   "/login/password",
   passport.authenticate("local", {
-    successRedirect: "/users/owner/self/",
-    failureRedirect: "/test",
+    successRedirect: extraPath + "/users/owner/self/",
+    failureRedirect: extraPath + "/test",
   })
 );
+app.get("/logout", ensureAuth, (req, res) => {
+  req.logout();
+  res.status(200).json({ "sucess:": true, message: "user logged out" });
+});
 app.get("/login/password", (req, res) => {
   if (!req.user) return res.status(400).json({ error: "user not found" });
   console.log(req.user);
