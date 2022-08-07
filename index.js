@@ -94,7 +94,7 @@ const io = new Server(server, {
     credentials: true,
     origin,
   },
-  path: "/api/socket.io",
+  path: "/socket.io",
 });
 
 app.use(express.json());
