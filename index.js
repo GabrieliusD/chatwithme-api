@@ -174,9 +174,11 @@ app.get("/login/password", (req, res) => {
 
 app.post("/signup", async (req, res, next) => {
   console.log("signup");
+  console.log(req.body);
   const salt = crypto.randomBytes(16);
-  const { username, password, email } = req.body;
-  if ((!username, !password, !email)) return next("missing field");
+  const { username, password, email, firstname, lastname } = req.body;
+  if ((!username, !password, !email, !firstname, !lastname))
+    return next("missing field");
   crypto.pbkdf2(
     password,
     salt,
@@ -206,7 +208,7 @@ app.post("/signup", async (req, res, next) => {
         if (err) {
           return next(err);
         }
-        res.redirect("/");
+        res.status(200).json({ success: "true" });
       });
     }
   );
